@@ -29,7 +29,7 @@ For example, we could use this subsection to discuss something specific about th
 # Equations
 
 Equations follow standard LaTeX syntax, like
-$$ \mathbb{E}[X] := \int_{-\infty}^{\infty} f_X(x) \ \mathrm{d}x $$
+$$ \mathbb{E}[X] := \int_{-\infty}^{\infty} x f_X(x) \ \mathrm{d}x $$
 or $f(x) = x^2$.
 
 # Table of Contents
