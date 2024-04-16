@@ -1,47 +1,80 @@
-## PLEASE KEEP IN MIND:
-## This is only a partial snippet of the code from lecture.
-## During lecture, we changed around a lot of the code,
-## to demonstrate in real-time the effect of these changes.
-## Please do not try to rely solely on the versions of the 
-## lecture demos that get posted to the website - 
-## you should plan on attending lecture, and following along
-
+library(palmerpenguins)
 library(tidyverse)
-library(reshape2)
-enrollments <- read.csv("data/enrollments.csv")
 
-# enrollments %>% View()
+penguins %>% View()
 
-# c(1, 2, 3) %>% sum() # equiv to sum(c(1, 2, 3))
+# How are missing values encodded? Ans: NA
+# How many penguins (observational units) were included in the study?
 
-enrollments_molten <- enrollments %>% 
-  melt(
-    id.vars = c("Course", "Title"),
-    variable.name = "Quarter",
-    value.name = "Enrollment"
+penguins %>% nrow()
+
+# There are 344 penguins included in the dataset
+
+# What are the variables?
+
+penguins %>% names()
+
+# What are the islands of Antarctica that were included in the dataset?
+
+penguins$island %>% unique()
+
+# What are the species?
+
+penguins$species %>% unique()
+
+# How many of each species are present?
+
+penguins %>%
+  group_by(species) %>%
+  summarise(num_spec = n())
+
+penguins$species %>% table() %>% barplot()
+
+
+penguins %>% 
+  ggplot(aes(y = species)) +
+  geom_bar() +
+  theme_minimal()
+
+
+## more sophisticated plots
+
+## are bill depths associated with bill lengths?
+
+penguins %>% 
+  ggplot(aes(x = bill_depth_mm,
+             y = bill_length_mm)) +
+  geom_point(aes(col = species)) +
+  theme_minimal() +
+  xlab("Bill Depth (mm)") +
+  ylab("Bill Length (mm)") +
+  ggtitle("Bill Length vs. Bill Depth")
+
+
+
+penguins %>%
+  ggplot(aes(x = species,
+             y = bill_length_mm)) +
+  geom_boxplot(staplewidth = 0.25) +
+  theme_minimal() 
+
+## comparing categorical variables
+
+penguins %>%
+  ggplot(aes(x = species, y = island)) +
+  geom_count() +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 90)
   )
 
+# looks like there were no gentoo penguins found on torgersen island, nor on dream
 
-enrollments_molten %>% 
-  mutate(
-    Quarter = factor(Quarter,
-                     ordered = T,
-                     levels = c("W22", "S22", "M22", "F22",
-                                "W23", "S23", "M23", "F23"))
-  ) %>%
-  ggplot(aes(x = Quarter, 
-             y = Enrollment,
-             group = Course)) +
-  geom_line(aes(colour = Course)) +
-  geom_point(aes(colour = Course))
 
-enrollments_molten$Quarter
+# numerical summaries
 
-enrollments_molten %>%
-  group_by(
-    Quarter
-  ) %>%
-  summarise(
-    tot_enrollment = sum(Enrollment, na.rm = T)
-  )
+# median body mass (g) for each species
 
+penguins %>%
+  group_by(species) %>%
+  summarise(med_mass = median(body_mass_g, na.rm = T))
