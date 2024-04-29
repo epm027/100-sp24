@@ -1,0 +1,343 @@
+---
+title: "Lab 03: String Cheese"
+subtitle: "PSTAT 100: Spring 2024 (Instructor: Ethan P. Marzban)"
+author:
+  - MEMBER 1 (NetID 1)
+  - MEMBER 2 (NetID 2)
+  - MEMBER 3 (NetID 3)
+date: "`r Sys.Date()`"
+date-format: long
+format: 
+  pdf:
+    header-includes:
+      - \usepackage[margin = 0.9in, 
+                    top = 0.8in, 
+                    bottom = 1.1in]{geometry}
+---
+
+```{r setup, echo = F}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, echo = F}
+## optional code chunk;
+## gives shortcut for boldface colored text,
+## able to be rendered in both PDF and HTML
+
+bfcolor <- function(x, color) {
+  if (knitr::is_latex_output()) {
+    sprintf("\\textcolor{%s}{\\textbf{%s}}", color, x)
+  } else if (knitr::is_html_output()) {
+    sprintf("<span style='color: %s;'><b>%s</b></span>", color, x)
+  } else x
+}
+```
+
+
+# Required Packages
+
+```{r, message = F, warning = F}
+library(ottr)        # for checking test cases (i.e. autograding)
+library(pander)      # for nicer-looking formatting of dataframe outputs
+library(tidyverse)   # for graphs, data wrangling, etc.
+```
+
+# Logistical Details
+
+:::{.callout-note}
+## **Logistical Details**
+
+-   This lab is due by **11:59pm on Wednesday, May 1, 2024**.
+
+-   Collaboration is allowed, and encouraged!
+    -   If you work in groups, list ALL of your group members' names and NetIDs (not Perm Numbers) in the appropriate spaces in the YAML header above.
+    -   Please delete any "MEMBER X" lines in the YAML header that are not needed.
+    -   No more than 3 people in a group, please.
+    
+-   Ensure your Lab properly renders to a `.pdf`; non-`.pdf` submissions will not be graded and will receive a score of 0.
+
+-   Ensure all test cases pass (test cases that have passed will display a message stating `"All tests passed!"`)
+:::
+
+# Lab Overview and Objectives
+
+In this lab, we will discuss:
+
+-   Basic handling of strings and **regular expressions**
+
+# Regular Expressions
+
+**Regular expressions** (often abbreviated as **regex**, pronounced either with a hard 'g' or a soft 'g') are essentially a sequence of symbols and characters designed to aid in the identification of particular patterns in strings. They are an integral part of the analysis of text, and thankfully can be (relatively) easily managed using tools from the `stringr` and `stringi` packages (both a part of the `tidyverse`). With that said, wrangling strings is sometimes considered to be the bane of data scientists' existences. We'll only be scratching the surface in this lab, but if you are planning on pursuing a career in data science I encourage you to read more on this topic. \
+
+First, let's explore the `str_view()` function. This function is used to extract out all elements of a character vector that match some pattern (where the pattern is specified using regular expressions). For example:
+```{r}
+str_view(
+  string = c("blackberry", "blueberry", "apple"),
+  pattern = "berry"
+)
+```
+
+
+:::{.callout-important}
+## **Question 1** 
+
+The vector called `fruit` (stored in the `stringr` package, which was loaded when we loaded the tidyverse) contains a character vector of 80 different fruits. Extract the fruits whose name contains the string "berry", and store this in a variable called `berries`. \
+
+`r bfcolor("Solution:", "blue")`
+```{r}
+## replace this line with your code
+```
+
+`r bfcolor("Answer Check:", "blue")`
+```{r, message = F}
+# DO NOT EDIT THIS LINE
+invisible({check("tests/q1.R")})
+```
+:::
+
+\
+
+Now, when dealing with regular expressions, there are two types of characters to be aware of: **literal characters** (which are letters/numbers that match exactly) and **metacharacters** (which are letters/numbers that have special meaning, and are not matched exactly _a priori_). For example:
+
+```{r, error = T}
+str_view(
+  c("one.world", "one.species", "together"),
+  ".")
+```
+
+Clearly, something's wrong - `str_view()` is not returning only the words/characters with periods in them. This is because the period, `.`, is a metacharacter. Specifically, where regular expressions are concerned, `.` will match with _any_ single character. For example:
+
+```{r}
+str_view(
+  c("cat", "dog", "orangutan"),
+  "a."
+)
+```
+
+will return only the characters containing an `a` followed by another character (notice how `"dog"` was not returned, as it does not contain an `"a"`.)
+
+
+
+:::{.callout-important}
+## **Question 2** 
+
+Extract only the fruits in the `fruit` vector whose names contain a "w". Store this in a variable called `w_fruits`. \
+
+`r bfcolor("Solution:", "blue")`
+```{r}
+## replace this line with your code
+```
+
+`r bfcolor("Answer Check:", "blue")`
+```{r, message = F}
+# DO NOT EDIT THIS LINE
+invisible({check("tests/q2.R")})
+```
+:::
+
+We can also combine periods:
+
+```{r}
+str_view(
+  c("a", "aa", "aba", "abbba", "abc"),
+  "a.a"
+)
+```
+
+:::{.callout-important}
+## **Question 3** 
+
+Extract only the fruits in the `fruit` vector whose names contain a "a", followed by two characters, followed by an "i". Store this in a variable called `ai_fruits`. \
+
+`r bfcolor("Solution:", "blue")`
+```{r}
+## replace this line with your code
+```
+
+`r bfcolor("Answer Check:", "blue")`
+```{r, message = F}
+# DO NOT EDIT THIS LINE
+invisible({check("tests/q3.R")})
+```
+:::
+
+\
+
+**Quantifiers** can be used to control the number of times a pattern can match:
+
+-   `?`: 0 times or 1 time
+-   `+`: 1 or more times
+-   `*`: 0 or more times
+
+For example:
+
+```{r}
+x <- c("a", "ab", "abb")
+
+# matches an "a", optionally followed by a "b"
+str_view(x, "ab?")
+
+# matches an "a", followed by at least one "b"
+str_view(x, "ab+")
+
+# matches an "a", followed by any number of "b"s
+str_view(x, "ab*")
+```
+
+We can also use curly braces `{` and `}` to specify the number of matches exactly:
+
+-   `{n}`: exactly _n_ repetitions
+-   `{n,}`: _n_ or more repetitions
+-   `{n, m}`: between _n_ and _m_ repetitions
+
+```{r}
+y <- c("ab", "abb", "abbb", "abbbb", "abbbbb")
+
+# will match only with a double "b"
+str_view(y, "b{2}")
+
+# will match with a sequence of two or more consecutive "b"s
+str_view(y, "b{2,}")
+
+# will match with a sequence of between 2 and 4 consecutive "b"s
+str_view(y, "b{2,4}")
+```
+
+:::{.callout-important}
+## **Question 4** 
+
+Extract only the fruits in the `fruit` vector whose names contain a sequence of at least two consecutive "r"s. Store this in a variable called `two_r_fruits`. \
+
+`r bfcolor("Solution:", "blue")`
+```{r}
+## replace this line with your code
+```
+
+`r bfcolor("Answer Check:", "blue")`
+```{r, message = F}
+# DO NOT EDIT THIS LINE
+invisible({check("tests/q4.R")})
+```
+:::
+
+\
+
+**Character classes** can be used to match a set of characters (i.e. identify strings that contain at least one of the elements in a set of characters). For example:
+
+```{r}
+z <- c("abb", "def", "cde")
+
+# match strings that contain either a "c" or an "f"
+str_view(z, "[cf]")
+```
+
+
+
+:::{.callout-important}
+## **Question 5** 
+
+Extract only the fruits in the `fruit` vector whose names contain a vowel, followed by a "b", followed by another vowel. Store this in a variable called `vowel_b_vowel_fruit`. \
+
+`r bfcolor("Solution:", "blue")`
+```{r}
+## replace this line with your code
+```
+
+`r bfcolor("Answer Check:", "blue")`
+```{r, message = F}
+# DO NOT EDIT THIS LINE
+invisible({check("tests/q5.R")})
+```
+:::
+
+\
+
+We can negate classes using the `^`. For example:
+
+```{r}
+# match with "non-vowel" "y" "non-vowel" 
+str_view(fruit, "[^aeiou]y[^aeiou]")
+```
+
+Perhaps somewhat confusingly, the caret (`^`) is also used as a part of what is known as an **anchor**, which is used to specify the start and end of a string. Specifically, `^` is used to specify the start of a string and `$` is used to specify the end. For example:
+
+```{r}
+z <- c("aba", "ab", "ba")
+
+# start with an "a"
+str_view(z, "^a")
+
+# ends with an "a"
+str_view(z, "a$")
+```
+
+
+:::{.callout-important}
+## **Question 6** 
+
+Extract only the fruits in the `fruit` vector whose names start with a vowel or end with a vowel (**hint:** look up what the `|` symbol is and how it can be used here). Store this in a variable called `vowel_vowel_fruit`. \
+
+`r bfcolor("Solution:", "blue")`
+```{r}
+## replace this line with your code
+```
+
+`r bfcolor("Answer Check:", "blue")`
+```{r, message = F}
+# DO NOT EDIT THIS LINE
+invisible({check("tests/q6.R")})
+```
+:::
+
+\
+
+Two additional important metacharacters are `\\b` (which matches word boundaries) and `\\B` (which matches boundaries that have either both word or non-word character on either side). 
+
+```{r}
+w <- c("Two words", "oneword")
+str_view(w, "\\b")
+str_view(w, "\\B")
+```
+\
+
+:::{.callout-important}
+## **Question 7** 
+
+Extract only the fruits in the `fruit` vector whose names consist of two words.  Store this in a variable called `two_word_fruits`. \
+
+`r bfcolor("Solution:", "blue")`
+```{r}
+## replace this line with your code
+```
+
+`r bfcolor("Answer Check:", "blue")`
+```{r, message = F}
+# DO NOT EDIT THIS LINE
+invisible({check("tests/q7.R")})
+```
+:::
+
+\
+
+A couple of miscellaneous notes:
+
+-   It is important to note that regular expressions are case-sensitive:
+```{r}
+str_view(c("ab", "Ab"), "^a")
+```
+
+-   Sometimes, it will be necessary to match a metacharacter literally. The way we do this is using a double backslash `\\`:
+```{r}
+str_view(c("hi^bye", "hi"), "\\^")
+```
+
+:::{.callout-note}
+## **Submission Details**
+
+1)    Check that all of your tables, plots, and code outputs are rendering correctly in your final `.pdf`.
+
+2)    Check that you passed all of the test cases (on questions that have autograders). You'll know that you passed all tests for a particular problem when you get the message "All tests passed!".
+
+3)    Submit **ONLY** your `.pdf` to Gradescope. Make sure to match pages to your questions - we'll be lenient on the first few labs, but after a while failure to match pages will result in point penalties.
+:::
