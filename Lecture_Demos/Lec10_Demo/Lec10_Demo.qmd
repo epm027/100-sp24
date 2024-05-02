@@ -1,0 +1,51 @@
+---
+title: "Lecture 10 Demo"
+subtitle: "PSTAT 100: Spring 2024"
+author: "Ethan P. Marzban"
+date: today
+date-format: long
+format: 
+  pdf:
+    header-includes:
+      - \usepackage{framed}
+      - \usepackage[margin = 1in]{geometry}
+number-sections: true
+---
+
+\begin{abstract}
+In this mini-report, we investigate the claims (posited by the \emph{Daily Nexus}) that 35\% of undergraduate regularly bike to campus. The results of a convenience sample seemed to indicate that, at a 5\% level of significance, the \emph{Daily Nexus}'s claim can be rejected, however the nature of the sample collected necessitates further investigation.
+\end{abstract}
+
+
+# Introduction
+
+A recent (Februrary 24, 2024) [_Daily Nexus_](https://dailynexus.com/2024-02-16/navigating-the-bike-friendly-campus-challenges-and-solutions-at-ucsb/
+) article claimed that 35\% of undergraduate students regularly bike to campus. The main purpose of this report was to collect a sample and assess the claims posed by the \emph{Daily Nexus}.
+
+# Data Collection
+
+A convenience sample consisting of the 34 students in attendance in lecture on Thursday, May 2, was taken. Each student was asked whether or not they regularly bike to campus; 18 students indicated that they do, leading to a sample proportion of $\widehat{p} = (18/34) \approx 52.94\%$.
+
+# Analysis and Results
+
+Setting $p$ to be the true proportion of UCSB undergraduates who regularly bike to campus, we conducted a two-sided hypothesis test of 
+$$ \left[ \begin{array}{ll}
+  H_0:    & p = 0.3   \\
+  H_A:    & p \neq 0.35
+\end{array} \right. $$
+The observed sample proportion value of $\widehat{p} = 18/34$ was standardized to
+$$ \mathrm{ts} = \frac{\left( \frac{18}{34} \right) - 0.35 }{\sqrt{\frac{(0.35) (1 - 0.35)}{34}}} \approx 2.19 $$
+and the critical value was computed as the 97.5^th^ percentile of the standard normal distribution - approximately 1.96. As the observed value of $\widehat{p}$ exceeds the critical value, the null was rejected leading to the conclusion
+\begin{leftbar}
+At a 5\% level of significance, there was sufficient evidence to reject the claims that 35\% of UCSB students regularly bike to campus.
+\end{leftbar}
+
+To confirm, an analysis using _p_-values was also conducted: the observed statistic corresponds to a _p_-value of approximately 0.029, which falls under the $\alpha = 0.05$ significance level, leading us (once again) to reject the null.
+
+# Discussion
+
+Though the results of the test indicate a rejection of the null is warranted at a 5\% level of significance, it should be noted that the sample collected was a **convenience sample**. As such, inference on the data collected should be viewed as dubious at best - a future study should be conducted, taking greater care in the initial sampling procedure.
+
+# Conclusion 
+
+A convenience sample of 34 students attending PSTAT 100 on Thursday, May 2, 2024 was collected, and 18 of these students indicated they regularly bike to campus. At a 5\% level of significance, our sample lead sufficient evidence to reject the _Daily Nexus_'s claim that the true proportion of UCSB undergraduates who bike to campus is 35\%. However, given that the sample collected was a convenience sample, the results of this study should be viewed with extreme caution. 
