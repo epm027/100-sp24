@@ -1,0 +1,286 @@
+---
+title: "Lab 05: Regression"
+subtitle: "PSTAT 100: Spring 2024 (Instructor: Ethan P. Marzban)"
+author:
+  - MEMBER 1 (NetID 1)
+  - MEMBER 2 (NetID 2)
+  - MEMBER 3 (NetID 3)
+date: "`r Sys.Date()`"
+date-format: long
+format: 
+  pdf:
+    header-includes:
+      - \usepackage[margin = 0.9in, 
+                    top = 0.8in, 
+                    bottom = 1.1in]{geometry}
+---
+
+```{r setup, echo = F}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, echo = F}
+## optional code chunk;
+## gives shortcut for boldface colored text,
+## able to be rendered in both PDF and HTML
+
+bfcolor <- function(x, color) {
+  if (knitr::is_latex_output()) {
+    sprintf("\\textcolor{%s}{\\textbf{%s}}", color, x)
+  } else if (knitr::is_html_output()) {
+    sprintf("<span style='color: %s;'><b>%s</b></span>", color, x)
+  } else x
+}
+```
+
+
+# Required Packages
+
+```{r, message = F, warning = F}
+library(ottr)        # for checking test cases (i.e. autograding)
+library(pander)      # for nicer-looking formatting of dataframe outputs
+library(tidyverse)   # for graphs, data wrangling, etc.
+library(gridExtra)   # for multipanel graphs
+```
+
+# Logistical Details
+
+:::{.callout-note}
+## **Logistical Details**
+
+-   This lab is due by **11:59pm on Wednesday, May 15, 2024**.
+
+-   Collaboration is allowed, and encouraged!
+    -   If you work in groups, list ALL of your group members' names and NetIDs (not Perm Numbers) in the appropriate spaces in the YAML header above.
+    -   Please delete any "MEMBER X" lines in the YAML header that are not needed.
+    -   No more than 3 people in a group, please.
+    
+-   Ensure your Lab properly renders to a `.pdf`; non-`.pdf` submissions will not be graded and will receive a score of 0.
+
+-   Ensure all test cases pass (test cases that have passed will display a message stating `"All tests passed!"`)
+:::
+
+# Lab Overview and Objectives
+
+In this lab, we will discuss:
+
+-   Regression using a categorical predictors
+-   Multiple regression
+-   Regression diagnostics
+
+# Multiple Regression and Modeling
+
+Given data $\mathcal{D} := \{\vec{\boldsymbol{x}}_i, y_i\}_{i=1}^{n}$ consisting of observations $y_i$ of a **response variable** `y` and observations $\vec{\boldsymbol{{x}}} := (x_{i1} , \cdots, x_{ip})$ on _p_ **explanatory** or **predictor variables** `x`~1~ through `x`~p~, a **statistical model** assumes the relationship between $y_i$ and $\vec{\boldsymbol{{x}}}_i$ to be
+$$ y_i = f(\vec{\boldsymbol{{x}}}) + \varepsilon_i $$
+
+
+for some **noise** term $\varepsilon_i$. 
+
+
+A **linear regression** model assumes:
+
+1)    A linear signal function; i.e. $f(\vec{\boldsymbol{x}}_i) = \beta_0 + \sum_{j=1}^{p} x_{ij}$
+
+2)    Numerical response values (i.e. `y` is assumed to be a numerical variable as opposed to a categorical one).
+
+The matrix representation of a linear regression model is:
+
+$$ \underbrace{ \begin{pmatrix} y_1 \\ y_2 \\ \vdots \\ y_n \\ \end{pmatrix}}_{:= \vec{\boldsymbol{y}}} = \underbrace{ \begin{pmatrix} 1 & x_{11} & x_{12} & \cdots & x_{1p} \\ 1 & x_{21} & x_{22} & \cdots & x_{2p}  \\ \vdots & \vdots & \vdots & \ddots & \vdots \\ 1 & x_{n1} & x_{n2} & \cdots & x_{np} \\  \end{pmatrix} }_{:= \mathbf{X}} \underbrace{ \begin{pmatrix} \beta_0 \\ \beta_1 \\ \beta_2 \\ \vdots \\ \beta_p \end{pmatrix} }_{:= \vec{\boldsymbol{\beta}}} + \underbrace{ \begin{pmatrix} \varepsilon_1 \\ \varepsilon_2 \\ \vdots \\ \varepsilon_n \\ \end{pmatrix} }_{:= \vec{\boldsymbol{\varepsilon}}} $$
+
+
+It is typical to assume i.i.d. Gaussian errors:
+$$ \varepsilon_i \stackrel{\mathrm{i.i.d}}{\sim} \mathcal{N}(0, \sigma^2) \ \iff \ \vec{\boldsymbol{\varepsilon}} \sim \mathcal{N}_{n} \left( \vec{\boldsymbol{0}} \ , \ \sigma^2 \mathbf{I} \right) $$
+
+The **ordinary least squares** (OLS) fit to the data seeks to find estimators $\widehat{\boldsymbol{\beta}}$ that solve the following minimization problem:
+$$ \widehat{\boldsymbol{\beta}} = \mathrm{arg\ } \min_{\vec{\boldsymbol{b}}} \left\{ \left\| \vec{\boldsymbol{y}} - \mathbf{X} \vec{\boldsymbol{b}} \right\|^2 \right\} $$
+which, under certain conditions, admits the following solution:
+$$ \widehat{\boldsymbol{\beta}} = (\mathbf{X}^{\intercal} \mathbf{X})^{-1} \mathbf{X}^{\intercal} \vec{\boldsymbol{y}} $$
+
+\bigskip
+
+
+Let's start out by comparing what the `lm()` function does against what we might do "by hand", according to the theory above. \
+
+Consider the following toy dataset, consisting of observations on one response variable `y` and two explanatory variables `x1` and `x2`.
+
+```{r}
+y <- c(1, 1, 2, 3, 3, 4, 5, 6, 7, 8)
+x1 <- c(1, 2, 1, 4, 5, 7, 6, 7, 9, 10)
+x2 <- c(1, 1, 1, 2, 3, 3, 4, 3, 1, 2)
+```
+
+
+:::{.callout-important}
+## **Question 1** 
+
+Run the above code chunk to create variables `y`, `x1`, and `x2` with the appropriate values. Then, construct the data matrix, and store this in a variable called `X`. **Important:** Recall that we (unless otherwise specified) _always_ include an intercept in our model. What does this mean about the first column of `X`? \
+
+`r bfcolor("Solution:", "blue")`
+```{r}
+## replace this line with your code
+```
+
+`r bfcolor("Answer Check:", "blue")`
+```{r, message = F}
+# DO NOT EDIT THIS LINE
+invisible({check("tests/q1.R")})
+```
+:::
+
+\
+
+
+:::{.callout-important}
+## **Question 2** 
+
+Compute the OLS estimates using **ONLY** the following quantities/functions/operators: `solve()`, `t()`, `%*%`, and `X` [where `X` is the variable you created in Question 1 above].  Store your result in a vector called `ols_hand`. \
+
+`r bfcolor("Solution:", "blue")`
+```{r}
+## replace this line with your code
+```
+
+`r bfcolor("Answer Check:", "blue")`
+```{r, message = F}
+# DO NOT EDIT THIS LINE
+invisible({check("tests/q2.R")})
+```
+:::
+
+\
+
+
+:::{.callout-important}
+## **Question 3** 
+
+Now, obtain the OLS estimates using the `lm()` function. Display both these estimates and your `ols_hand` values, and compare. \
+
+`r bfcolor("Solution:", "blue")`
+```{r}
+## replace this line with your code
+```
+
+`r bfcolor("Answer Check:", "blue")`
+
+There is no autograder for this question.
+:::
+
+\
+
+Interpretation is key. In a SLR setting, the interpretation of the $\widehat{\beta}_1$ coefficient is relatively straightforward: a one-unit increase in the explanatory variable corresponds to a predicted $\widehat{\beta}_1$-unit increase in the response variable. In a multiple linear regression (MLR) setting, note that
+$$ \widehat{y}_i = \widehat{\beta}_0 + \widehat{\beta}_1 x_{i1} + \cdots + \widehat{\beta}_p x_{ip} + \varepsilon_i $$
+Hence, we can interpret the value of $\widehat{\beta}_i$, for any $i$, as: a one-unit change in the _i_^th^ predictor corresponds to a predicted $\widehat{\beta}_i$-unit change in the response, _ceterus paribus_ (holding all else constant). Keep this in mind for the next part of this lab. \
+
+# Regression Diagnostics
+
+Recall that simply fitting and interpreting a regression model is not enough - we must perform some **model diagnostics** as well. As with many aspects of data science and statistical modeling, there isn't a single procedural approach to performing model diagnostics - rather, with practice you learn which tools to use in which situation. \
+
+For the purposes of this class, there are two main tools we can use for diagnostics:
+
+1)    QQ-plots (to assess the normality assumption of the errors)
+
+2)    Residuals plots (to check for poorly fitting models, outliers, and heteroskedasticity). 
+
+
+In this portion of the lab, we'll deal with a mock dataset consisting of three variables:
+
+-   `scores`: the midterm scores of students in a particular PSTAT course (maximum number of points was 35)
+
+-   `slp_hrs`: the amount of sleep (in hours) students got the night before the exam
+
+-   `stdy_hrs`: the amount of time (in hours) students studied for the exam
+
+Our goal is to regress `scores` on `slp_hrs` and `stdy_hrs` (i.e. we'll treat `scores` as the response variable). \
+
+:::{.callout-important}
+## **Question 4** 
+
+Import the file called `scores.csv`, located in the `data` subfolder. As a quick proxy for EDA, generate the following:
+
+-   a plot to visualize the distribution of scores on the exam
+-   a plot to visualize the distribution of the amount of sleep students got the night before the exam
+-   a plot to visualize the distribution of the amount of time students spent studying for the exam 
+
+It's up to you to figure out which plot is best-suited for each of these; if there are potentially multiple plots that could be produced, just pick one. \
+
+`r bfcolor("Solution:", "blue")`
+```{r}
+## replace this line with your code
+```
+
+`r bfcolor("Answer Check:", "blue")`
+
+There is no autograder for this question.
+:::
+
+\
+
+
+:::{.callout-important}
+## **Question 5** 
+
+Use `lm()` to regress `scores` onto `slp_hrs` and `stdy_hrs`. Provide verbal interpretations of the coefficients, and note whether any coefficients are deemed statisically insignificant (**hint:** regression table, as was shown during one of the lecture demos). \
+
+`r bfcolor("Solution:", "blue")`
+```{r}
+## replace this line with your code
+```
+
+`r bfcolor("Answer Check:", "blue")`
+
+There is no autograder for this question.
+:::
+
+\
+
+:::{.callout-important}
+## **Question 6** 
+
+Produce a QQ-plot of the residuals. Does the normality assumption appear to be violated? \
+
+`r bfcolor("Solution:", "blue")`
+```{r}
+## replace this line with your code
+```
+
+`r bfcolor("Answer Check:", "blue")`
+
+There is no autograder for this question.
+:::
+
+\
+
+
+:::{.callout-important}
+## **Question 7** 
+
+Produce a residuals plot. As a hint: save your call to `lm()` from Question 7 as a variable so that you can use `$residuals` and `$fitted.values` to access the residuals and fitted values. \
+
+Comment on the plot. Specifically:
+
+-   Are there any outliers? If so, are they influential points, points of high leverage, or both? How can you tell?
+
+-   Is there any heteroskedasticity apparent? If so, what is the nature of the heteroskedasticity (e.g. is the variance increasing _linearly_ with the mean? quadratically? etc.)
+
+`r bfcolor("Solution:", "blue")`
+```{r}
+## replace this line with your code
+```
+
+`r bfcolor("Answer Check:", "blue")`
+
+There is no autograder for this question.
+:::
+
+\
+
+:::{.callout-note}
+## **Submission Details**
+
+1)    Check that all of your tables, plots, and code outputs are rendering correctly in your final `.pdf`.
+
+2)    Check that you passed all of the test cases (on questions that have autograders). You'll know that you passed all tests for a particular problem when you get the message "All tests passed!".
+
+3)    Submit **ONLY** your `.pdf` to Gradescope. Make sure to match pages to your questions - we'll be lenient on the first few labs, but after a while failure to match pages will result in point penalties.
+:::
