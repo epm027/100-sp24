@@ -1,0 +1,94 @@
+---
+title: "Lecture 17: Demo 2"
+subtitle: "PSTAT 100: Spring 2024 (Instructor: Ethan P. Marzban)"
+author:
+  - Ethan P. Marzban
+date: "`r Sys.Date()`"
+date-format: long
+format:
+  html:
+    page-layout: full
+    toc: TRUE
+---
+
+```{r setup, echo = F}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo = F}
+## optional code chunk;
+## gives shortcut for boldface colored text,
+## able to be rendered in both PDF and HTML
+
+bfcolor <- function(x, color) {
+  if (knitr::is_latex_output()) {
+    sprintf("\\textcolor{%s}{\\textbf{%s}}", color, x)
+  } else if (knitr::is_html_output()) {
+    sprintf("<span style='color: %s;'><b>%s</b></span>", color, x)
+  } else x
+}
+```
+
+## Required Packages
+```{r, message = F}
+library(tidyverse)   # for basic data wrangling, and plots
+library(gridExtra)   # for multi-panel plots
+```
+
+## Overview
+
+Do members of congress seem to vote along party lines? Though we may suspect the answer to be obvious, let's use PCA to analytically produce an answer. \
+
+In this dataset, we have the votes from approximately 48 different **roll call votes** conducted by the 118^th^ House of Representatives, spanning a time period from January 2024 to May 22, 2024. We have restricted our consideration only to roll call votes on matters pertaining to the passage of bills (i.e. we have disregarded sessions designed to vote on the approval of minutes, etc.) \
+
+The main dataset we will work with is stored in a file called `votes.csv`, located in the `data` subfolder (its contents have been sourced from [this source](https://clerk.house.gov/Votes)).
+
+## Data Preprocessing
+
+```{r}
+## read in the data
+```
+
+There are a few bits of preprocessing we need to do. First, note that votes have been encoded verbally, as words - we'd like to convert everything to numbers. As such, let's start off by replacing all instances of a "positive" vote (either "Yes" or "Aye) with 1, and anything else ("Nea", "Not Voted", etc.) as 0. 
+
+```{r}
+## re-encode "yesses" as 1 and everything else as 0
+```
+
+We'd also like to include information on whether a particular house represenative is a woman or not. The official website of Congress lists their [currently-serving members that identify as women](https://clerk.house.gov/Members#Demographics); a list of these members can be found in the file called `women.csv` (also located in the `data` subfolder).
+
+```{r}
+## attach gender-related information to the votes dataframe
+```
+
+Finally, the format of the data is not conducive to analyses across bills; let's fix this by way of a transformation (like the ones we did in week 1 of this course).
+
+```{r}
+## transform the dataframe into a more appropriate format
+```
+
+## PCA
+
+We're ultimately going to want to use PCA to reduce the dimensions of our dataframe. First, though, we should note that the `prcomp()` function is not particularly forgiving when it comes to missing data - as such, we'll start off by simply throwing out rows that contain missing data.^[We'll learn a few more sophisticated techniques for dealing with missing data during the last lecture of this class.] Specifically, we'll make use of the `complete.cases()` function:
+
+```{r}
+## throw out rows with missing data
+```
+
+Okay, let's project! As stated several times before in this class, Data Scientists like to project into two dimensions (so that we can generate plots). So, let's plot the first two latent factors.
+
+```{r}
+## plot the first two latent factors
+```
+
+With any luck, the plot you generated should display some distinct **clusters** (i.e. groups of points). We have a suspicion that these clusters might coincide with party lines - let's test this hunch by coloring our scatterplot based on party (i.e. Democratic vs. Republican). For bonus brownie points, pick two colors from the Okabe-Ito color scheme (remember this from week 2 of the course?) to ensure your graph remains colorblind-friendly. Comment on the plot.
+
+```{r}
+## color based on party
+```
+
+Let's see if there any differences along gender lines (admitting that we have used a fairly coarse categorization of gender into Female and non-Female). Change another aesthetic of the plot from above to encode information on the gender of each representative. Comment on the plot.
+
+```{r}
+## change an aesthetic to encode gender information
+```

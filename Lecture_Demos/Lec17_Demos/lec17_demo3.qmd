@@ -1,0 +1,121 @@
+---
+title: "Lecture 17: Demo 3"
+subtitle: "PSTAT 100: Spring 2024 (Instructor: Ethan P. Marzban)"
+author:
+  - Ethan P. Marzban
+date: "`r Sys.Date()`"
+date-format: long
+format:
+  html:
+    page-layout: full
+    toc: TRUE
+---
+
+```{r setup, echo = F}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo = F}
+## optional code chunk;
+## gives shortcut for boldface colored text,
+## able to be rendered in both PDF and HTML
+
+bfcolor <- function(x, color) {
+  if (knitr::is_latex_output()) {
+    sprintf("\\textcolor{%s}{\\textbf{%s}}", color, x)
+  } else if (knitr::is_html_output()) {
+    sprintf("<span style='color: %s;'><b>%s</b></span>", color, x)
+  } else x
+}
+```
+
+## Required Packages
+```{r, message = F}
+library(tidyverse)   # for basic data wrangling, and plots
+library(gridExtra)   # for multi-panel plots
+```
+
+## Overview
+
+The Modified National Institute of Standards and Technology (**MNIST**) database is a fairly famous dataset among data scientists and those studying Machine Learning. It consists of around 70,000 different images, where each image is of a handwritten digit (written by either a high school student or employee of the US Census Bureau). The full dataset is split into two sets (called a **training** and **testing** set, respectively), but we will ignore the split for the purposes of this demonstration. \
+
+Each image has been stored as a vector of length 785. The first entry is a **label** indicating what the digit is supposed to be (0 through 9, inclusive) and the remaining 784 correspond to brightness levels (from 0 to 255). The brightness levels were originally stored as a 28 $\times$ 28 matrix, where each entry corresponds to the brightness of a specific pixel.
+
+## Converting from Vector to Image
+
+It will be useful to develop a function that takes in one vectorized image and returns a rendering of the actual image that was encoded. There are many ways to construct such a function- here is one way:
+
+```{r}
+image_gen_ggplot <- function(x) {
+  vect <- (x[-1] %>% as.numeric) / 255
+  as.im <- matrix(vect,
+                  nrow = 28,
+                  byrow = T)
+  as.im <- scale(as.im, scale = F)
+  
+  as.im[nrow(as.im):1,] %>%
+    as.data.frame() %>%
+    rowid_to_column(var = 'y') %>%
+    pivot_longer(
+      -y,
+      names_to = 'x',
+      values_to = "brightness"
+    ) %>%
+    mutate(x = parse_number(x)) %>%
+    ggplot(aes(x = x, y = y, fill = brightness)) +
+    geom_raster() +
+    theme_void() +
+    scale_fill_gradient2(low="white", high="black", guide="none") +
+    theme(
+      panel.border = element_rect(linewidth = 1,
+                                  fill = NA)
+    )
+}
+```
+
+## Exploring the Dataset
+
+The dataset is located in a subfolder called `data`, in a file called `mnist.csv`. Read in the data, and call the `image_gen_ggplot()` function on the first row.
+
+```{r}
+mnist <- read.csv("data/mnist.csv")
+image_gen_ggplot(mnist[1,])
+```
+
+
+It's a bit difficult to make out what digit this is supposed to be. What digit is this supposed to be? (Yes, there is a way to find out using code!)
+
+```{r}
+## What number is that supposed to be?
+```
+
+
+## PCA
+
+Let's stick with just the first image in the dataset. Our goal is to use PCA to essentially "compress" the image, into a lower-dimensional representation. Here's how we'll do this:
+
+1)    Generate a scree plot to identify an appropriate number of dimensions to retain
+
+2)    Perform PCA and project our image matrix into a _k_-dimensional subspace (where $k$ is our answer from the first step), then back-transform to obtain an approximation to our original image (and then run this through our image generation function to visually inspect our result).
+
+```{r}
+## encode the image as a matrix of brightness values
+
+```
+
+```{r}
+## generate a scree plot
+
+```
+
+```{r}
+## use inverse-PCA to project into 9 dimensions, and then back-project
+
+```
+
+Notice that we've obtained a pretty faithful representation of the original image, despite having reduced the intrinsic dimension of the image from 28 to only 9. Let's see what happens if we take things to an extreme: specifically, let's reduce the dimensionality of the image to 2, and see what the resulting image looks like:
+
+```{r}
+## use inverse-PCA to project into 2 dimensions, and then back-project
+
+```
